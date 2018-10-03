@@ -6,6 +6,7 @@ import ar.edu.itba.pod.watcher.ElectionWatcherService;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -13,22 +14,21 @@ import java.util.Map;
 public class ElectionWatcherServiceImpl implements ElectionWatcherService, Serializable {
 
 	private Map<ElectionParty, List<ElectionWatcherHandler>> watchers;
-	private Boolean countingInProgress;
 
-	public ElectionWatcherServiceImpl(Map<ElectionParty, List<ElectionWatcherHandler>> watchers, Boolean countingInProgress) throws RemoteException {
+	public ElectionWatcherServiceImpl(Map<ElectionParty, List<ElectionWatcherHandler>> watchers) throws RemoteException {
+		UnicastRemoteObject.exportObject(this, 0);
 		this.watchers = watchers;
-		this.countingInProgress = countingInProgress;
 	}
 
 	@Override
 	public void watchElection(ElectionParty party, ElectionWatcherHandler electionWatcherHandler) throws RemoteException {
 		synchronized (Server.countingLock) {
-			if (countingInProgress == null) {
+			if (Server.countingInProgress == null) {
 				if (!watchers.containsKey(party)) watchers.put(party, new LinkedList<>());
 				watchers.get(party).add(electionWatcherHandler);
-			} else if (countingInProgress == true) {
+			} else if (Server.countingInProgress == true) {
 				throw new CountingAlreadyStartedException();
-			} else if (countingInProgress == false) {
+			} else if (Server.countingInProgress == false) {
 				throw new CountingEndedException();
 			}
 		}

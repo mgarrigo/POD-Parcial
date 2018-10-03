@@ -20,21 +20,18 @@ public class ElectionCountingServiceImpl implements ElectionCountingService {
 	private Map<ElectionParty, Integer> votes;
 
 	private Map<ElectionParty, List<ElectionWatcherHandler>> watchers;
-	private Boolean countingInProgress;
 
-	public ElectionCountingServiceImpl(Map<ElectionParty, List<ElectionWatcherHandler>> watchers,
-									   Boolean countingInProgress) throws RemoteException {
+	public ElectionCountingServiceImpl(Map<ElectionParty, List<ElectionWatcherHandler>> watchers) throws RemoteException {
 		UnicastRemoteObject.exportObject(this, 0);
 		votes = new HashMap<>();
 		this.watchers = watchers;
-		this.countingInProgress = countingInProgress;
 	}
 
 	@Override
 	public void countingStarted() throws RemoteException {
 		synchronized (Server.countingLock) {
-			if (countingInProgress == false) throw new CountingEndedException();
-			countingInProgress = true;
+			if (Server.countingInProgress != null && Server.countingInProgress == false) throw new CountingEndedException();
+			Server.countingInProgress = true;
 		}
 
 		int count = 0;
@@ -53,8 +50,8 @@ public class ElectionCountingServiceImpl implements ElectionCountingService {
 	public void countBallot(ElectionParty electionParty) throws RemoteException {
 		int currentCount;
 		synchronized (Server.countingLock) {
-			if (countingInProgress == null) throw new CountingNotStartedException();
-			if (countingInProgress == false) throw new CountingEndedException();
+			if (Server.countingInProgress == null) throw new CountingNotStartedException();
+			if (Server.countingInProgress == false) throw new CountingEndedException();
 			if (!votes.containsKey(electionParty)) votes.put(electionParty, 0);
 			currentCount = votes.get(electionParty) + 1;
 			votes.put(electionParty, currentCount);
@@ -72,8 +69,8 @@ public class ElectionCountingServiceImpl implements ElectionCountingService {
 	@Override
 	public void countingEnded() throws RemoteException {
 		synchronized (Server.countingLock) {
-			if (countingInProgress == null) throw new CountingNotStartedException();
-			countingInProgress = false;
+			if (Server.countingInProgress == null) throw new CountingNotStartedException();
+			Server.countingInProgress = false;
 		}
 
 		Integer max = votes.values().stream().max(Integer::compareTo).get();

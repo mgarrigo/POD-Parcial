@@ -14,18 +14,18 @@ import java.util.Map;
 public class Server {
 
 	public static Object countingLock = new Integer(2);
+	public static Boolean countingInProgress = null;
 
 	public static void main(String[] args) throws RemoteException {
 
 		// Primero tiene que obtener el rmi registry
-		Registry registry = LocateRegistry.getRegistry();
+		Registry registry = LocateRegistry.getRegistry("localhost", 1099);
 
 		//Instancia los servicios, que se exportan en el contstructor
 		Map<ElectionParty, List<ElectionWatcherHandler>> watchers = new HashMap<>();
-		Boolean countingInProgress = null;
 
-		ElectionCountingService electionCountingService = new ElectionCountingServiceImpl(watchers, countingInProgress);
-		ElectionWatcherService electionWatcherService = new ElectionWatcherServiceImpl(watchers, countingInProgress);
+		ElectionCountingService electionCountingService = new ElectionCountingServiceImpl(watchers);
+		ElectionWatcherService electionWatcherService = new ElectionWatcherServiceImpl(watchers);
 
 		registry.rebind("electionCountingService", electionCountingService);
 		registry.rebind("electionWatcherService", electionWatcherService);

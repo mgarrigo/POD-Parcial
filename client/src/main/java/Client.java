@@ -22,7 +22,8 @@ public class Client {
 
 		electionCountingService.countingStarted();
 
-		electionCountingService.countBallot(ElectionParty.CENTRAL_PARTY);
+		electionCountingService.countBallot(ElectionParty.RIGHT_PARTY);
+		electionCountingService.countBallot(ElectionParty.RIGHT_PARTY);
 
 		electionCountingService.countingEnded();
 	}
